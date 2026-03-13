@@ -4,6 +4,7 @@ local popup = require("cursor-dictionary.popup")
 local M = {}
 
 local enabled = false
+local popup_position = "cursor"
 
 function M.toggle()
   enabled = not enabled
@@ -18,6 +19,10 @@ function M.setup(opts)
 
   if opts.dict then
     dict.load(opts.dict)
+  end
+
+  if opts.popup_position then
+    popup_position = opts.popup_position
   end
 
   vim.api.nvim_create_user_command("CursorDictToggle", function()
@@ -37,7 +42,7 @@ function M.setup(opts)
       end
       local translation = dict.lookup(word)
       if translation then
-        popup.show(translation)
+        popup.show(translation, popup_position)
       else
         popup.close()
       end
