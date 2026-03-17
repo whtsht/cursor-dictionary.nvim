@@ -5,8 +5,13 @@ local win_id = nil
 function M.show(text, position)
   M.close()
 
-  local width = math.max(#text + 2, 10)
-  local lines = { text }
+  local lines = vim.split(text, "\n", { plain = true })
+  local width = 0
+  for _, l in ipairs(lines) do
+    width = math.max(width, #l)
+  end
+  width = math.max(width + 2, 10)
+  local height = #lines
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
@@ -17,17 +22,17 @@ function M.show(text, position)
       row = vim.o.lines - 4,
       col = math.floor((vim.o.columns - width) / 2),
       width = width,
-      height = 1,
+      height = height,
       style = "minimal",
       border = "rounded",
     }
   else
     win_opts = {
       relative = "cursor",
-      row = -2,
+      row = -(height + 2),
       col = 0,
       width = width,
-      height = 1,
+      height = height,
       style = "minimal",
       border = "rounded",
     }

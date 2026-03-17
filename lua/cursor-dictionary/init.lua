@@ -18,7 +18,7 @@ function M.setup(opts)
   opts = opts or {}
 
   if opts.dict then
-    dict.load(opts.dict)
+    dict.load(opts.dict, opts.dict_type)
   end
 
   if opts.popup_position then
