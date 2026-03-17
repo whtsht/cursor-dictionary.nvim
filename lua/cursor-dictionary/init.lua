@@ -21,6 +21,10 @@ function M.setup(opts)
     dict.load(opts.dict, opts.dict_type)
   end
 
+  if opts.enabled then
+    enabled = true
+  end
+
   if opts.popup_position then
     popup_position = opts.popup_position
   end
