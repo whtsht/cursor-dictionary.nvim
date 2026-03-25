@@ -1,90 +1,113 @@
 local M = {}
 
-local entries = {}
+local cdict = {
+  file           = nil,
+  entry_count    = 0,
+  val_pool_start = 0,
+  key_index      = nil,
+  key_pool       = nil,
+}
 
-local function load_csv(filepath)
-  local f = io.open(filepath, "r")
+local CACHE_MAX  = 100
+local cache      = {}
+local cache_keys = {}
+
+local function cache_get(word)
+  return cache[word]
+end
+
+local function cache_put(word, translation)
+  if cache[word] == nil then
+    if #cache_keys >= CACHE_MAX then
+      local oldest = table.remove(cache_keys, 1)
+      cache[oldest] = nil
+    end
+    table.insert(cache_keys, word)
+  end
+  cache[word] = translation
+end
+
+local function u32(s, pos)
+  local a, b, c, d = string.byte(s, pos, pos + 3)
+  return a + b * 256 + c * 65536 + d * 16777216
+end
+
+local function u16(s, pos)
+  local a, b = string.byte(s, pos, pos + 1)
+  return a + b * 256
+end
+
+local RECORD_SIZE = 12
+
+local function binary_search(word)
+  local lo, hi = 0, cdict.entry_count - 1
+  while lo <= hi do
+    local mid     = math.floor((lo + hi) / 2)
+    local rec_pos = mid * RECORD_SIZE + 1
+    local key_offset = u32(cdict.key_index, rec_pos)
+    local key_len    = u16(cdict.key_index, rec_pos + 4)
+    local val_offset = u32(cdict.key_index, rec_pos + 6)
+    local val_len    = u16(cdict.key_index, rec_pos + 10)
+    local key = cdict.key_pool:sub(key_offset + 1, key_offset + key_len)
+    if key == word then
+      cdict.file:seek("set", cdict.val_pool_start + val_offset)
+      return cdict.file:read(val_len)
+    elseif key < word then
+      lo = mid + 1
+    else
+      hi = mid - 1
+    end
+  end
+  return nil
+end
+
+function M.load(filepath)
+  if cdict.file then
+    cdict.file:close()
+    cdict.file = nil
+  end
+  cache      = {}
+  cache_keys = {}
+
+  local f = io.open(filepath, "rb")
   if not f then
     vim.notify("cursor-dictionary: cannot open " .. filepath, vim.log.levels.ERROR)
     return
   end
-  for line in f:lines() do
-    local word, translation = line:match("^([^,]+),(.+)$")
-    if word and translation then
-      entries[word:lower()] = translation
-    end
-  end
-  f:close()
-end
 
-local HEADWORD_MARKER = "■"
-local SPECIAL_DELIMITERS = { "  {", "〔", " {" }
-
-local function parse_eijiro_line(line)
-  if not line:match("^" .. HEADWORD_MARKER) then
-    return nil, nil
-  end
-  local rest = line:sub(#HEADWORD_MARKER + 1)
-  local delim_pos = rest:find(" : ", 1, true)
-  if not delim_pos then
-    return nil, nil
-  end
-  local first_half = rest:sub(1, delim_pos - 1)
-  local description = rest:sub(delim_pos + 3)
-  local headword = first_half
-  for _, delim in ipairs(SPECIAL_DELIMITERS) do
-    local pos = first_half:find(delim, 1, true)
-    if pos then
-      headword = first_half:sub(1, pos - 1)
-      description = first_half:sub(pos) .. " : " .. description
-      break
-    end
-  end
-  headword = headword:match("^%s*(.-)%s*$")
-  return headword, description
-end
-
-local function load_eijiro(filepath)
-  local cmd = string.format("iconv -f CP932 -t UTF-8 %q", filepath)
-  local f = io.popen(cmd, "r")
-  if not f then
-    vim.notify("cursor-dictionary: cannot open " .. filepath, vim.log.levels.ERROR)
+  local header = f:read(24)
+  if not header or #header < 24 or header:sub(1, 8) ~= "CDICT\x01\x00\x00" then
+    vim.notify("cursor-dictionary: invalid cdict file", vim.log.levels.ERROR)
+    f:close()
     return
   end
-  local current_head = nil
-  local current_lines = {}
-  for line in f:lines() do
-    line = line:gsub("\r$", "")
-    local headword, description = parse_eijiro_line(line)
-    if headword then
-      if headword ~= current_head then
-        if current_head then
-          entries[current_head:lower()] = table.concat(current_lines, "\n")
-        end
-        current_head = headword
-        current_lines = { description }
-      else
-        table.insert(current_lines, description)
-      end
-    end
-  end
-  if current_head then
-    entries[current_head:lower()] = table.concat(current_lines, "\n")
-  end
-  f:close()
-end
 
-function M.load(filepath, filetype)
-  entries = {}
-  if filetype == "eijiro" then
-    load_eijiro(filepath)
-  else
-    load_csv(filepath)
-  end
+  local entry_count     = u32(header, 9)
+  local key_index_start = u32(header, 13)
+  local key_pool_start  = u32(header, 17)
+  local val_pool_start  = u32(header, 21)
+
+  f:seek("set", key_index_start)
+  local key_index = f:read(entry_count * RECORD_SIZE)
+
+  f:seek("set", key_pool_start)
+  local key_pool = f:read(val_pool_start - key_pool_start)
+
+  cdict.file           = f
+  cdict.entry_count    = entry_count
+  cdict.val_pool_start = val_pool_start
+  cdict.key_index      = key_index
+  cdict.key_pool       = key_pool
 end
 
 function M.lookup(word)
-  return entries[word:lower()]
+  if not cdict.file then return nil end
+  local lower = word:lower()
+  local cached = cache_get(lower)
+  if cached then return cached end
+  local result = binary_search(lower)
+  if result then cache_put(lower, result) end
+  return result
 end
 
 return M

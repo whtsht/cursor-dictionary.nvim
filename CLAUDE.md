@@ -4,32 +4,65 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-`cursor-dictionary.nvim` is a Neovim plugin that displays dictionary translations for the word under the cursor in a floating popup window. It loads a user-provided CSV dictionary file and shows translations as the cursor moves.
+`cursor-dictionary.nvim` is a Neovim plugin that displays dictionary translations for the word under the cursor in a split window. It loads a `.cdict` binary dictionary file and shows translations as the cursor moves.
 
 ## Architecture
-
-Three-module architecture with a clean separation of concerns:
 
 ```
 plugin/cursor-dictionary.lua       # Entry point (loaded by Neovim)
 lua/cursor-dictionary/
-  init.lua                         # Orchestration: setup, toggle, autocmd
-  dict.lua                         # Data layer: CSV loading and word lookup
-  popup.lua                        # UI layer: floating window management
+  init.lua                         # Orchestration: setup, toggle, autocmd, commands
+  dict.lua                         # Data layer: .cdict loading and word lookup
+  win.lua                          # UI layer: split window management
+  build.lua                        # Build tool: CSV/EIJIRO → .cdict conversion
 ```
 
-**Data flow:** On `CursorMoved`, `init.lua` calls `vim.fn.expand("<cword>")`, looks up the word via `dict.lookup()`, then either shows or closes the popup via `popup.show()`/`popup.close()`.
+**Data flow:** On `CursorMoved`, `init.lua` calls `vim.fn.expand("<cword>")`, looks up the word via `dict.lookup()`, then shows the result via `win.show()`. The split window is skipped (`win.is_dict_win()`) to avoid reacting to cursor movement within it.
 
-### Key module APIs
+## .cdict Binary Format
 
-- `init.lua`: `M.setup(opts)` (opts: `{ dict_path = "path/to/file.csv" }`), `M.toggle()`
-- `dict.lua`: `M.load(filepath)`, `M.lookup(word)` — case-insensitive, CSV format `word,translation`
-- `popup.lua`: `M.show(text)`, `M.close()` — floating window 2 lines above cursor, rounded border
+The custom dictionary format used for fast, low-memory lookups. All integers are little-endian.
 
-## Development
+```
+Header (24 bytes):
+  magic[8]:           "CDICT\x01\x00\x00"
+  entry_count[4]:     uint32
+  key_index_start[4]: uint32  (absolute offset)
+  key_pool_start[4]:  uint32  (absolute offset)
+  val_pool_start[4]:  uint32  (absolute offset)
 
-This plugin has no build process, no external dependencies, and no test framework. Development is done by editing Lua files directly and testing in Neovim.
+Key Index (entry_count × 12 bytes, sorted lexicographically):
+  key_offset[4]: uint32  (offset into key pool)
+  key_len[2]:    uint16
+  val_offset[4]: uint32  (offset into val pool)
+  val_len[2]:    uint16
 
-The `.luarc.json` disables `undefined-global` diagnostics to allow Neovim global APIs (`vim.*`) without warnings in the Lua language server.
+Key Pool: concatenated lowercase key strings
+Val Pool: concatenated translation strings (newline-separated when multiple definitions)
+```
 
-The `sample.csv` contains 10 English-to-Japanese entries as a reference for the expected CSV format.
+At startup, Key Index and Key Pool are loaded entirely into memory. Val Pool is accessed on-demand via file seek. Binary search runs entirely in memory; only the matched translation requires a file read.
+
+**LuaJIT compatibility:** `string.pack`/`string.unpack` are Lua 5.3+ and unavailable in Neovim's LuaJIT. Use `string.byte` for reading (see `u32`/`u16` in `dict.lua`) and `string.char` for writing (see `pack_u32`/`pack_u16` in `build.lua`).
+
+## Testing
+
+No test framework. Tests run via a standalone Lua script (requires Lua 5.3+ on the system, not LuaJIT):
+
+```bash
+lua scripts/test_cdict.lua
+```
+
+Building a `.cdict` for manual testing in Neovim:
+
+```
+:CursorDictBuild /path/to/dict.csv /path/to/output.cdict
+:CursorDictBuild /path/to/EIJIRO.TXT /path/to/output.cdict eijiro
+```
+
+## Key Module APIs
+
+- `init.lua`: `M.setup(opts)` — opts: `{ dict = "path/to/file.cdict", enabled = bool }`
+- `dict.lua`: `M.load(filepath)`, `M.lookup(word)` — case-insensitive, LRU cache (100 entries)
+- `win.lua`: `M.show(text)`, `M.close()`, `M.is_dict_win()` — botright split, max 12 lines tall
+- `build.lua`: `M.build(filetype, input_path, output_path)` — filetype: `"eijiro"` or nil (CSV)

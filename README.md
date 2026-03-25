@@ -1,11 +1,11 @@
 # cursor-dictionary.nvim
 
-A Neovim plugin that displays dictionary translations for the word under the cursor in a window.
+A Neovim plugin that displays dictionary translations for the word under the cursor in a split window.
 
 ## Features
 
-- Looks up the word under the cursor and shows its translation in a floating popup
-- Loads any CSV-format dictionary file
+- Looks up the word under the cursor and shows its translation in a bottom split window
+- Supports CSV and EIJIRO dictionary formats (converted to `.cdict` binary format)
 - Toggle on/off with a single command
 
 ## Installation
@@ -17,50 +17,48 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
   "whtsht/cursor-dictionary.nvim",
   config = function()
     require("cursor-dictionary").setup({
-      dict = "/path/to/your/dictionary.csv",
+      dict = "/path/to/your/dictionary.cdict",
     })
   end,
 }
 ```
 
-Using [packer.nvim](https://github.com/wbthomason/packer.nvim):
+## Dictionary Setup
 
-```lua
-use {
-  "whtsht/cursor-dictionary.nvim",
-  config = function()
-    require("cursor-dictionary").setup({
-      dict = "/path/to/your/dictionary.csv",
-    })
-  end,
-}
+Dictionaries must be converted to `.cdict` format before use.
+
+**From CSV:**
+```
+:CursorDictBuild /path/to/dict.csv /path/to/output.cdict
 ```
 
-## Configuration
-
-```lua
-require("cursor-dictionary").setup({
-  dict = "/path/to/your/dictionary.csv", -- path to your CSV dictionary file
-})
+**From EIJIRO (.TXT):**
+```
+:CursorDictBuild /path/to/EIJIRO.TXT /path/to/output.cdict eijiro
 ```
 
-## Dictionary Format
-
-The dictionary file must be a CSV file with one entry per line in the format `word,translation`:
+### CSV Format
 
 ```
 hello,こんにちは
 world,世界
 function,関数
-variable,変数
 ```
 
 A sample dictionary is included at `sample.csv`.
 
-## Usage
+## Configuration
 
-| Command            | Description                        |
-|--------------------|------------------------------------|
-| `:CursorDictToggle` | Toggle the dictionary popup on/off |
+```lua
+require("cursor-dictionary").setup({
+  dict    = "/path/to/dictionary.cdict",
+  enabled = false,  -- start disabled (default: false)
+})
+```
 
-When enabled, moving the cursor over a word will display its translation in a floating popup above the cursor. Moving to a word with no entry closes the popup.
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `:CursorDictToggle` | Toggle the dictionary window on/off |
+| `:CursorDictBuild {input} {output} [eijiro]` | Convert a dictionary file to `.cdict` format |
