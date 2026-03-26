@@ -8,6 +8,7 @@ local cdict = {
   key_pool       = nil,
 }
 
+-- FIFO cache (capped at CACHE_MAX entries; oldest-inserted entry is evicted first)
 local CACHE_MAX  = 100
 local cache      = {}
 local cache_keys = {}
@@ -46,10 +47,10 @@ local function binary_search(word)
     local rec_pos = mid * RECORD_SIZE + 1
     local key_offset = u32(cdict.key_index, rec_pos)
     local key_len    = u16(cdict.key_index, rec_pos + 4)
-    local val_offset = u32(cdict.key_index, rec_pos + 6)
-    local val_len    = u16(cdict.key_index, rec_pos + 10)
     local key = cdict.key_pool:sub(key_offset + 1, key_offset + key_len)
     if key == word then
+      local val_offset = u32(cdict.key_index, rec_pos + 6)
+      local val_len    = u16(cdict.key_index, rec_pos + 10)
       cdict.file:seek("set", cdict.val_pool_start + val_offset)
       return cdict.file:read(val_len)
     elseif key < word then
@@ -82,10 +83,16 @@ function M.load(filepath)
     return
   end
 
-  local entry_count     = u32(header, 9)
-  local key_index_start = u32(header, 13)
-  local key_pool_start  = u32(header, 17)
-  local val_pool_start  = u32(header, 21)
+  -- Header field positions (1-based Lua; format doc uses 0-based)
+  local HDR_ENTRY_COUNT     = 9
+  local HDR_KEY_INDEX_START = 13
+  local HDR_KEY_POOL_START  = 17
+  local HDR_VAL_POOL_START  = 21
+
+  local entry_count     = u32(header, HDR_ENTRY_COUNT)
+  local key_index_start = u32(header, HDR_KEY_INDEX_START)
+  local key_pool_start  = u32(header, HDR_KEY_POOL_START)
+  local val_pool_start  = u32(header, HDR_VAL_POOL_START)
 
   f:seek("set", key_index_start)
   local key_index = f:read(entry_count * RECORD_SIZE)

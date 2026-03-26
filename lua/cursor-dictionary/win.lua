@@ -26,6 +26,7 @@ function M.show(text)
   end
 
   local current_win = vim.api.nvim_get_current_win()
+  -- noautocmd: suppress other plugins' window-open handlers
   vim.cmd("noautocmd botright 12split")
   win_id = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(win_id, buf)

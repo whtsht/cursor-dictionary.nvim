@@ -108,18 +108,20 @@ local function parse_eijiro(filepath)
     return nil
   end
   local tbl = {}
-  local current_lower = nil
   for raw_line in f:lines() do
     local line = raw_line:gsub("\r$", "")
     local headword, description = parse_eijiro_line(line)
     if headword then
       local lower = headword:lower()
       if not tbl[lower] then tbl[lower] = {} end
-      current_lower = lower
-      table.insert(tbl[current_lower], description)
+      table.insert(tbl[lower], description)
     end
   end
-  f:close()
+  local ok = f:close()
+  if not ok then
+    vim.notify("cursor-dictionary: iconv failed for " .. filepath, vim.log.levels.ERROR)
+    return nil
+  end
   return tbl
 end
 
@@ -165,7 +167,12 @@ local function write_cdict(tbl, output_path)
 end
 
 function M.build(filetype, input_path, output_path)
-  vim.notify("cursor-dictionary: parsing " .. input_path .. " ...")
+  if filetype ~= nil and filetype ~= "eijiro" then
+    vim.notify("cursor-dictionary: unknown filetype: " .. filetype .. " (expected: eijiro)", vim.log.levels.ERROR)
+    return
+  end
+
+  vim.notify("cursor-dictionary: parsing " .. input_path .. " ...", vim.log.levels.INFO)
 
   local tbl
   if filetype == "eijiro" then
@@ -175,10 +182,10 @@ function M.build(filetype, input_path, output_path)
   end
   if not tbl then return end
 
-  vim.notify("cursor-dictionary: building " .. output_path .. " ...")
+  vim.notify("cursor-dictionary: building " .. output_path .. " ...", vim.log.levels.INFO)
   local n = write_cdict(tbl, output_path)
   if n > 0 then
-    vim.notify(string.format("cursor-dictionary: done (%d entries) → %s", n, output_path))
+    vim.notify(string.format("cursor-dictionary: done (%d entries) → %s", n, output_path), vim.log.levels.INFO)
   end
 end
 

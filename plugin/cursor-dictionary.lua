@@ -1,0 +1,1 @@
+-- Intentionally empty: call require("cursor-dictionary").setup() in your config

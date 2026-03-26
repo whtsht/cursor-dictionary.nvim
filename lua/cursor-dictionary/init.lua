@@ -8,7 +8,7 @@ local enabled = false
 function M.toggle()
   enabled = not enabled
   if not enabled then win.close() end
-  vim.notify("cursor-dictionary: " .. (enabled and "enabled" or "disabled"))
+  vim.notify("cursor-dictionary: " .. (enabled and "enabled" or "disabled"), vim.log.levels.INFO)
 end
 
 function M.setup(opts)
