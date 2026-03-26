@@ -43,7 +43,7 @@ Val Pool: concatenated translation strings (newline-separated when multiple defi
 
 At startup, Key Index and Key Pool are loaded entirely into memory. Val Pool is accessed on-demand via file seek. Binary search runs entirely in memory; only the matched translation requires a file read.
 
-**LuaJIT compatibility:** `string.pack`/`string.unpack` are Lua 5.3+ and unavailable in Neovim's LuaJIT. Use `string.byte` for reading (see `u32`/`u16` in `dict.lua`) and `string.char` for writing (see `pack_u32`/`pack_u16` in `build.lua`).
+**Lua version note:** Neovim embeds LuaJIT, which implements Lua 5.1. `string.pack`/`string.unpack` were introduced in Lua 5.3 and are therefore unavailable. Use `string.byte` for reading (see `u32`/`u16` in `dict.lua`) and `string.char` for writing (see `pack_u32`/`pack_u16` in `build.lua`).
 
 ## Testing
 
