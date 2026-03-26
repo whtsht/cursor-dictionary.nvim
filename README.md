@@ -62,3 +62,7 @@ require("cursor-dictionary").setup({
 |---------|-------------|
 | `:CursorDictToggle` | Toggle the dictionary window on/off |
 | `:CursorDictBuild {input} {output} [eijiro]` | Convert a dictionary file to `.cdict` format |
+
+## Acknowledgements
+
+Inspired by [mouse-dictionary](https://github.com/wtetsu/mouse-dictionary), a browser extension that displays dictionary definitions for words under the mouse cursor. This plugin brings the same concept to Neovim.
