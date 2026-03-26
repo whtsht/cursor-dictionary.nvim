@@ -26,8 +26,7 @@ function M.show(text)
   end
 
   local current_win = vim.api.nvim_get_current_win()
-  local height      = math.min(#lines, 12)
-  vim.cmd("noautocmd botright " .. height .. "split")
+  vim.cmd("noautocmd botright 12split")
   win_id = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(win_id, buf)
   vim.wo[win_id].winfixheight    = true
