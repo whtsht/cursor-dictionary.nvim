@@ -28,15 +28,14 @@ function M.setup(opts)
 
   vim.api.nvim_create_user_command("CursorDictBuild", function(o)
     local args = o.fargs
-    if #args < 2 or #args > 3 then
+    if #args ~= 3 then
       vim.notify(
-        "Usage: CursorDictBuild {input} {output} [eijiro]",
+        "Usage: CursorDictBuild {input} {output} {format}\n  format: csv | eijiro",
         vim.log.levels.ERROR
       )
       return
     end
-    local input, output   = args[1], args[2]
-    local filetype        = args[3]
+    local input, output, filetype = args[1], args[2], args[3]
     require("cursor-dictionary.build").build(filetype, input, output)
   end, { nargs = "+", complete = "file" })
 

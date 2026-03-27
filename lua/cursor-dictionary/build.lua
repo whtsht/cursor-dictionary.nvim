@@ -252,8 +252,11 @@ local function write_cdict(tbl, output_path)
 end
 
 function M.build(filetype, input_path, output_path)
-  if filetype ~= nil and filetype ~= "eijiro" then
-    vim.notify("cursor-dictionary: unknown filetype: " .. filetype .. " (expected: eijiro)", vim.log.levels.ERROR)
+  if filetype ~= "csv" and filetype ~= "eijiro" then
+    vim.notify(
+      "cursor-dictionary: unknown format: " .. tostring(filetype) .. " (expected: csv | eijiro)",
+      vim.log.levels.ERROR
+    )
     return
   end
 

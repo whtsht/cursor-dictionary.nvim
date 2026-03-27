@@ -56,7 +56,7 @@ lua scripts/test_cdict.lua
 Building a `.cdict` for manual testing in Neovim:
 
 ```
-:CursorDictBuild /path/to/dict.csv /path/to/output.cdict
+:CursorDictBuild /path/to/dict.csv /path/to/output.cdict csv
 :CursorDictBuild /path/to/EIJIRO.TXT /path/to/output.cdict eijiro
 ```
 

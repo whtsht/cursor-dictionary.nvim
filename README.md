@@ -29,7 +29,7 @@ Dictionaries must be converted to `.cdict` format before use.
 
 **From CSV:**
 ```
-:CursorDictBuild /path/to/dict.csv /path/to/output.cdict
+:CursorDictBuild /path/to/dict.csv /path/to/output.cdict csv
 ```
 
 **From EIJIRO (.TXT):**
@@ -61,7 +61,7 @@ require("cursor-dictionary").setup({
 | Command | Description |
 |---------|-------------|
 | `:CursorDictToggle` | Toggle the dictionary window on/off |
-| `:CursorDictBuild {input} {output} [eijiro]` | Convert a dictionary file to `.cdict` format |
+| `:CursorDictBuild {input} {output} {format}` | Convert a dictionary file to `.cdict` format (`format`: `csv` \| `eijiro`) |
 
 ## Acknowledgements
 
