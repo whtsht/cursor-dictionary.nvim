@@ -53,6 +53,19 @@ No test framework. Tests run via a standalone Lua script (requires Lua 5.3+ on t
 lua scripts/test_cdict.lua
 ```
 
+### Debug Scripts
+
+```bash
+# Inspect the binary structure of a .cdict file (Header, Key Index, Key Pool, Val Pool)
+lua scripts/inspect_cdict.lua <file.cdict>
+
+# Look up a word in a .cdict file
+lua scripts/lookup_cdict.lua <file.cdict> <word>
+
+# Parse an EIJIRO .TXT file and dump all entries to stdout (hardcoded to EIJIRO-1448-ENABLE.TXT)
+lua scripts/parse-eijiro.lua
+```
+
 Building a `.cdict` for manual testing in Neovim:
 
 ```
