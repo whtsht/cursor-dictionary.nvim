@@ -45,7 +45,6 @@ world,世界
 function,関数
 ```
 
-A sample dictionary is included at `sample.csv`.
 
 ## Configuration
 
