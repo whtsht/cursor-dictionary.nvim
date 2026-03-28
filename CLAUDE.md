@@ -63,6 +63,6 @@ Building a `.cdict` for manual testing in Neovim:
 ## Key Module APIs
 
 - `init.lua`: `M.setup(opts)` — opts: `{ dict = "path/to/file.cdict", enabled = bool }`
-- `dict.lua`: `M.load(filepath)`, `M.lookup(word)` — case-insensitive, LRU cache (100 entries)
+- `dict.lua`: `M.load(filepath)`, `M.lookup(word)` — case-insensitive, FIFO cache (100 entries)
 - `win.lua`: `M.show(text)`, `M.close()`, `M.is_dict_win()` — botright split, max 12 lines tall
 - `build.lua`: `M.build(filetype, input_path, output_path)` — filetype: `"eijiro"` or nil (CSV)
