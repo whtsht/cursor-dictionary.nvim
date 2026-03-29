@@ -64,6 +64,9 @@ lua scripts/lookup_cdict.lua <file.cdict> <word>
 
 # Parse an EIJIRO .TXT file and dump all entries to stdout (hardcoded to EIJIRO-1448-ENABLE.TXT)
 lua scripts/parse-eijiro.lua
+
+# Build a .cdict from a JSON file {"word": "translation", ...} (requires Lua 5.3+)
+lua scripts/build_json.lua <input.json> <output.cdict>
 ```
 
 Building a `.cdict` for manual testing in Neovim, configure `setup()` with the `dict` table:
@@ -82,7 +85,7 @@ The `.cdict` is built automatically on first startup and cached in `<dir>/dict.c
 
 ## Key Module APIs
 
-- `init.lua`: `M.setup(opts)` — opts: `{ dict = { source = "path", dir = "path", format = "csv"|"eijiro" }, enabled = bool }`
+- `init.lua`: `M.setup(opts)` — opts: `{ dict = { source = "path", dir = "path", format = "csv"|"eijiro" }, enabled = bool }`. Omit `dict` to load the bundled `default-dict.cdict`.
 - `dict.lua`: `M.load(filepath)`, `M.lookup(word)` — case-insensitive, FIFO cache (100 entries)
 - `win.lua`: `M.show(text)`, `M.close()`, `M.is_dict_win()` — botright split, max 12 lines tall
 - `build.lua`: `M.build(filetype, input_path, output_path)` — filetype: `"eijiro"` or nil (CSV)

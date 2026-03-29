@@ -16,6 +16,19 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 {
   "whtsht/cursor-dictionary.nvim",
   config = function()
+    require("cursor-dictionary").setup({})
+  end,
+}
+```
+
+A bundled English-Japanese dictionary (`default-dict.cdict`, ~46,000 entries) is used automatically when no `dict` is configured. Source: [EJDict](https://kujirahand.com/web-tools/EJDictFreeDL.php).
+
+To use your own dictionary instead:
+
+```lua
+{
+  "whtsht/cursor-dictionary.nvim",
+  config = function()
     require("cursor-dictionary").setup({
       dict = {
         source = "/path/to/EIJIRO.TXT",
@@ -47,6 +60,7 @@ function,関数
 
 ```lua
 require("cursor-dictionary").setup({
+  -- omit `dict` to use the bundled default dictionary
   dict = {
     source = "/path/to/source",  -- path to CSV or EIJIRO .TXT file
     dir    = "/path/to/dir",     -- output directory; dict.cdict is saved here

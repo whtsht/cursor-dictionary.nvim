@@ -5,6 +5,11 @@ local M = {}
 
 local enabled = false
 
+local function plugin_root()
+  local src = debug.getinfo(1, "S").source:sub(2)
+  return vim.fn.fnamemodify(src, ":h:h:h")
+end
+
 function M.toggle()
   enabled = not enabled
   if not enabled then win.close() end
@@ -23,6 +28,8 @@ function M.setup(opts)
       require("cursor-dictionary.build").build(cfg.format, cfg.source, cdict_path)
     end
     dict.load(cdict_path)
+  else
+    dict.load(plugin_root() .. "/default-dict.cdict")
   end
 
   if opts.enabled then
