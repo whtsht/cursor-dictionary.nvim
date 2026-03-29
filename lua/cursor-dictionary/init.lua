@@ -16,6 +16,38 @@ function M.toggle()
   vim.notify("cursor-dictionary: " .. (enabled and "enabled" or "disabled"), vim.log.levels.INFO)
 end
 
+local MAX_PHRASE_WORDS = 5
+
+local function get_phrase_candidates(col, line)
+  local tokens = {}
+  for s, w, e in line:gmatch("()([%a%-%']+)()") do
+    tokens[#tokens + 1] = { s = s, e = e, word = w }
+  end
+
+  local idx = nil
+  for i, tok in ipairs(tokens) do
+    if col >= tok.s - 1 and col <= tok.e - 2 then
+      idx = i; break
+    end
+  end
+
+  if not idx then return nil end
+
+  local n = #tokens
+  local candidates = {}
+
+  for len = MAX_PHRASE_WORDS, 1, -1 do
+    local a_min = math.max(1, idx - len + 1)
+    local a_max = math.min(idx, n - len + 1)
+    for a = a_min, a_max do
+      local b = a + len - 1
+      candidates[#candidates + 1] = line:sub(tokens[a].s, tokens[b].e - 1)
+    end
+  end
+
+  return candidates
+end
+
 function M.setup(opts)
   opts = opts or {}
 
@@ -51,11 +83,19 @@ vim.api.nvim_create_autocmd({ "CursorMoved" }, {
     callback = function()
       if not enabled then return end
       if win.is_dict_win() then return end
-      local word = vim.fn.expand("<cword>")
-      if word == "" then return end
-      local translation = dict.lookup(word)
-      if translation then
-        win.show(translation)
+
+      local pos  = vim.api.nvim_win_get_cursor(0)
+      local line = vim.api.nvim_get_current_line()
+      local candidates = get_phrase_candidates(pos[2], line)
+
+      if not candidates then return end
+
+      for _, phrase in ipairs(candidates) do
+        local translation = dict.lookup(phrase)
+        if translation then
+          win.show(translation)
+          return
+        end
       end
     end,
   })
