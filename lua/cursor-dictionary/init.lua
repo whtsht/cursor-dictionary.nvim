@@ -23,9 +23,16 @@ function M.setup(opts)
     local cfg = opts.dict
     local dir = cfg.dir
     local cdict_path = dir .. "/dict.cdict"
-    if vim.fn.filereadable(cdict_path) == 0 then
+    local source_file = dir .. "/dict.cdict.source"
+    local f = io.open(source_file, "r")
+    local stored = f and f:read("*l") or nil
+    if f then f:close() end
+
+    if vim.fn.filereadable(cdict_path) == 0 or stored ~= cfg.source then
       vim.fn.mkdir(dir, "p")
       require("cursor-dictionary.build").build(cfg.format, cfg.source, cdict_path)
+      local fw = io.open(source_file, "w")
+      if fw then fw:write(cfg.source); fw:close() end
     end
     dict.load(cdict_path)
   else

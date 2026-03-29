@@ -81,7 +81,7 @@ require("cursor-dictionary").setup({
 })
 ```
 
-The `.cdict` is built automatically on first startup and cached in `<dir>/dict.cdict`.
+The `.cdict` is built automatically on first startup and cached in `<dir>/dict.cdict`. The source path is saved to `<dir>/dict.cdict.source`; the build re-runs whenever that path changes (e.g. switching from the default dict to EIJIRO).
 
 ## Key Module APIs
 
