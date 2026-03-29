@@ -23,18 +23,19 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 A bundled English-Japanese dictionary (`default-dict.cdict`, ~46,000 entries) is used automatically when no `dict` is configured. Source: [EJDict](https://kujirahand.com/web-tools/EJDictFreeDL.php).
 
-To use your own dictionary instead:
+To use [EIJIRO](https://www.eijiro.jp/textfiles.htm) instead:
 
 ```lua
-{
+return {
   "whtsht/cursor-dictionary.nvim",
   config = function()
     require("cursor-dictionary").setup({
       dict = {
-        source = "/path/to/EIJIRO.TXT",
-        dir = vim.fn.stdpath("data") .. "/cursor-dictionary",
+        source = vim.fn.expand("~/Downloads/EIJIRO-1448.TXT"),
+        dir = vim.fn.expand("~/.local/share/nvim/cursor-dictionary/"),
         format = "eijiro",
       },
+      enabled = false,
     })
   end,
 }
