@@ -2,6 +2,10 @@
 
 A Neovim plugin that displays dictionary translations for the word under the cursor in a split window.
 
+## Demo
+
+https://github.com/user-attachments/assets/dd54a9ca-c64c-4d6d-a9dd-a95aeed104dd
+
 ## Features
 
 - Looks up the word under the cursor and shows its translation in a bottom split window
