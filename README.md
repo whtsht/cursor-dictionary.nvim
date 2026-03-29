@@ -17,27 +17,23 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
   "whtsht/cursor-dictionary.nvim",
   config = function()
     require("cursor-dictionary").setup({
-      dict = "/path/to/your/dictionary.cdict",
+      dict = {
+        source = "/path/to/EIJIRO.TXT",
+        dir = vim.fn.stdpath("data") .. "/cursor-dictionary",
+        format = "eijiro",
+      },
     })
   end,
 }
 ```
 
+On first startup, the source file is automatically converted to `.cdict` and saved to `<dir>/dict.cdict`. Subsequent startups skip the build and load the cached file directly.
+
 ## Dictionary Setup
 
-Dictionaries must be converted to `.cdict` format before use.
+### Supported formats
 
-**From CSV:**
-```
-:CursorDictBuild /path/to/dict.csv /path/to/output.cdict csv
-```
-
-**From EIJIRO (.TXT):**
-```
-:CursorDictBuild /path/to/EIJIRO.TXT /path/to/output.cdict eijiro
-```
-
-### CSV Format
+**CSV** — two-column format:
 
 ```
 hello,こんにちは
@@ -45,12 +41,17 @@ world,世界
 function,関数
 ```
 
+**EIJIRO** — set `format = "eijiro"` and point `source` at the `.TXT` file (CP932 encoding). Requires `iconv` to be available on `$PATH`.
 
 ## Configuration
 
 ```lua
 require("cursor-dictionary").setup({
-  dict    = "/path/to/dictionary.cdict",
+  dict = {
+    source = "/path/to/source",  -- path to CSV or EIJIRO .TXT file
+    dir    = "/path/to/dir",     -- output directory; dict.cdict is saved here
+    format = "csv",              -- "csv" or "eijiro"
+  },
   enabled = false,  -- start disabled (default: false)
 })
 ```
@@ -60,7 +61,6 @@ require("cursor-dictionary").setup({
 | Command | Description |
 |---------|-------------|
 | `:CursorDictToggle` | Toggle the dictionary window on/off |
-| `:CursorDictBuild {input} {output} {format}` | Convert a dictionary file to `.cdict` format (`format`: `csv` \| `eijiro`) |
 
 ## .cdict Format
 

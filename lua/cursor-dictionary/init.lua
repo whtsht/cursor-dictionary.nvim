@@ -15,7 +15,14 @@ function M.setup(opts)
   opts = opts or {}
 
   if opts.dict then
-    dict.load(opts.dict)
+    local cfg = opts.dict
+    local dir = cfg.dir
+    local cdict_path = dir .. "/dict.cdict"
+    if vim.fn.filereadable(cdict_path) == 0 then
+      vim.fn.mkdir(dir, "p")
+      require("cursor-dictionary.build").build(cfg.format, cfg.source, cdict_path)
+    end
+    dict.load(cdict_path)
   end
 
   if opts.enabled then
@@ -26,20 +33,7 @@ function M.setup(opts)
     M.toggle()
   end, {})
 
-  vim.api.nvim_create_user_command("CursorDictBuild", function(o)
-    local args = o.fargs
-    if #args ~= 3 then
-      vim.notify(
-        "Usage: CursorDictBuild {input} {output} {format}\n  format: csv | eijiro",
-        vim.log.levels.ERROR
-      )
-      return
-    end
-    local input, output, filetype = args[1], args[2], args[3]
-    require("cursor-dictionary.build").build(filetype, input, output)
-  end, { nargs = "+", complete = "file" })
-
-  vim.api.nvim_create_autocmd({ "CursorMoved" }, {
+vim.api.nvim_create_autocmd({ "CursorMoved" }, {
     callback = function()
       if not enabled then return end
       if win.is_dict_win() then return end

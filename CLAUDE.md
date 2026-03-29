@@ -66,16 +66,23 @@ lua scripts/lookup_cdict.lua <file.cdict> <word>
 lua scripts/parse-eijiro.lua
 ```
 
-Building a `.cdict` for manual testing in Neovim:
+Building a `.cdict` for manual testing in Neovim, configure `setup()` with the `dict` table:
 
+```lua
+require("cursor-dictionary").setup({
+  dict = {
+    source = "/path/to/EIJIRO.TXT",
+    dir = vim.fn.stdpath("data") .. "/cursor-dictionary",
+    format = "eijiro",
+  },
+})
 ```
-:CursorDictBuild /path/to/dict.csv /path/to/output.cdict csv
-:CursorDictBuild /path/to/EIJIRO.TXT /path/to/output.cdict eijiro
-```
+
+The `.cdict` is built automatically on first startup and cached in `<dir>/dict.cdict`.
 
 ## Key Module APIs
 
-- `init.lua`: `M.setup(opts)` — opts: `{ dict = "path/to/file.cdict", enabled = bool }`
+- `init.lua`: `M.setup(opts)` — opts: `{ dict = { source = "path", dir = "path", format = "csv"|"eijiro" }, enabled = bool }`
 - `dict.lua`: `M.load(filepath)`, `M.lookup(word)` — case-insensitive, FIFO cache (100 entries)
 - `win.lua`: `M.show(text)`, `M.close()`, `M.is_dict_win()` — botright split, max 12 lines tall
 - `build.lua`: `M.build(filetype, input_path, output_path)` — filetype: `"eijiro"` or nil (CSV)
