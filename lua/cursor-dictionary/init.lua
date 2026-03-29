@@ -93,7 +93,7 @@ vim.api.nvim_create_autocmd({ "CursorMoved" }, {
       for _, phrase in ipairs(candidates) do
         local translation = dict.lookup(phrase)
         if translation then
-          win.show(translation)
+          win.show("[" .. phrase .. "]\n" .. translation)
           return
         end
       end
