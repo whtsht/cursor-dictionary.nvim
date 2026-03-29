@@ -1,0 +1,147 @@
+*cursor-dictionary.txt*  Dictionary lookup for the word under the cursor
+
+==============================================================================
+CONTENTS                                        *cursor-dictionary-contents*
+
+    1. Introduction .................. |cursor-dictionary-introduction|
+    2. Installation .................. |cursor-dictionary-installation|
+    3. Setup ......................... |cursor-dictionary-setup|
+    4. Commands ...................... |cursor-dictionary-commands|
+    5. Dictionary Formats ............ |cursor-dictionary-formats|
+    6. Cdict Binary Format ........... |cursor-dictionary-cdict|
+
+==============================================================================
+1. INTRODUCTION                                 *cursor-dictionary-introduction*
+
+cursor-dictionary.nvim is a Neovim plugin that looks up the word under the
+cursor and displays the translation in a bottom split window.
+
+Features:
+  - Automatically looks up words and phrases on CursorMoved
+  - Searches phrase candidates up to 5 words, longest first
+  - Displays translations in a bottom split window (max 12 lines tall)
+  - Converts CSV / EIJIRO dictionaries to .cdict binary format for fast lookup
+  - Bundled English-Japanese dictionary (~46,000 entries) included by default
+
+==============================================================================
+2. INSTALLATION                                 *cursor-dictionary-installation*
+
+Using lazy.nvim: >lua
+    {
+      "whtsht/cursor-dictionary.nvim",
+      config = function()
+        require("cursor-dictionary").setup({})
+      end,
+    }
+<
+Using EIJIRO: >lua
+    {
+      "whtsht/cursor-dictionary.nvim",
+      config = function()
+        require("cursor-dictionary").setup({
+          dict = {
+            source = vim.fn.expand("~/Downloads/EIJIRO-1448.TXT"),
+            dir    = vim.fn.expand("~/.local/share/nvim/cursor-dictionary/"),
+            format = "eijiro",
+          },
+          enabled = false,
+        })
+      end,
+    }
+<
+On first startup the source file is converted to .cdict and saved as
+`<dir>/dict.cdict`. Subsequent startups load the cached file directly and
+skip the build step.
+
+==============================================================================
+3. SETUP                                        *cursor-dictionary-setup*
+
+Call `require("cursor-dictionary").setup(opts)` to initialize the plugin.
+
+Fields of the opts table:
+
+  dict ~
+    Dictionary configuration table. Omit to use the bundled default-dict.cdict.
+
+    dict.source  (string)
+      Path to a CSV or EIJIRO .TXT file.
+
+    dict.dir  (string)
+      Output directory where dict.cdict is saved.
+
+    dict.format  (string)
+      `"csv"` or `"eijiro"`.
+
+  enabled  (boolean, default: false) ~
+    Set to `true` to enable the plugin immediately on startup.
+
+Example: >lua
+    require("cursor-dictionary").setup({
+      dict = {
+        source = "/path/to/dict.csv",
+        dir    = vim.fn.stdpath("data") .. "/cursor-dictionary",
+        format = "csv",
+      },
+      enabled = true,
+    })
+<
+==============================================================================
+4. COMMANDS                                     *cursor-dictionary-commands*
+
+                                                *:CursorDictToggle*
+:CursorDictToggle
+    Toggle the dictionary window on and off.
+    Closing the window when disabled.
+    A notification message reports the current state.
+
+Example keymap: >lua
+    vim.keymap.set("n", "<leader>d", "<cmd>CursorDictToggle<cr>")
+<
+==============================================================================
+5. DICTIONARY FORMATS                           *cursor-dictionary-formats*
+
+CSV ~
+Two-column CSV format (no header): >
+    hello,こんにちは
+    world,世界
+    function,関数
+<
+EIJIRO ~
+Supports EIJIRO .TXT files (CP932 encoding).
+Set `format = "eijiro"` and point `source` at the .TXT file.
+`iconv` must be available on $PATH for the conversion step.
+
+Default dictionary ~
+When `dict` is omitted, the bundled English-Japanese dictionary (EJDict,
+~46,000 entries) is used automatically.
+
+==============================================================================
+6. CDICT BINARY FORMAT                          *cursor-dictionary-cdict*
+
+`.cdict` is a custom binary format designed for fast, low-memory lookups.
+All integers are little-endian.
+
+Header (24 bytes): >
+    magic[8]:           "CDICT\x01\x00\x00"
+    entry_count[4]:     uint32
+    key_index_start[4]: uint32  (absolute offset)
+    key_pool_start[4]:  uint32  (absolute offset)
+    val_pool_start[4]:  uint32  (absolute offset)
+<
+Key Index (entry_count x 12 bytes, sorted lexicographically): >
+    key_offset[4]: uint32  (offset into key pool)
+    key_len[2]:    uint16
+    val_offset[4]: uint32  (offset into val pool)
+    val_len[2]:    uint16
+<
+Key Pool: concatenated lowercase key strings
+
+Val Pool: concatenated translation strings (newline-separated for multiple
+          definitions)
+
+At startup, the Key Index and Key Pool are loaded entirely into memory.
+The Val Pool is accessed on-demand via file seek. Binary search runs entirely
+in memory; only the matched translation requires a file read.
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
